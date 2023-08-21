@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
-env = gym.make("ALE/MsPacman-v5", render_mode="human")
+env = gym.make("ALE/MsPacman-v5", render_mode="rgb_array")
 
 
 class ReplayBuffer:
@@ -127,7 +127,7 @@ class DQN:
         if np.random.random() < self.epsilon:
             action = env.action_space.sample()
         else:
-            state = torch.tensor([state], dtype=torch.float).to(self.device)
+            state = torch.tensor(np.array([state]), dtype=torch.float).to(self.device)
             action = self.QNet(state).argmax().item()  # 获取价值评估最大的值的动作下标
         return action
 
@@ -156,7 +156,7 @@ class DQN:
 
 
 lr = 2e-3
-num_episodes = 10
+num_episodes = 100
 gamma = 0.98
 init_epsilon = 1.0
 epsilon_decay = init_epsilon / (num_episodes / 2)
@@ -176,8 +176,8 @@ action_dim = env.action_space.n
 agent = DQN(state_dim, lr, gamma, init_epsilon, epsilon_decay, final_epsilon, target_update, device)
 
 return_list = []  # 记录回报
-for i in range(num_episodes):
-    with tqdm(total=int(num_episodes / 1), desc='Epoch%d' % (i + 1)) as pbar:
+for i in range(10):
+    with tqdm(total=int(num_episodes / 10), desc='Epoch%d' % (i + 1)) as pbar:
         for i_epoch in range(int(num_episodes / 10)):
             episode_return = 0
             state, info = env.reset()
@@ -202,7 +202,7 @@ for i in range(num_episodes):
                     agent.update(transition_dict)
             agent.decay_epsilon()
             return_list.append(episode_return)
-            if (i_epoch + 1) % 10 == 0:
+            if (i_epoch + 1) % (int(num_episodes / 10)) == 0:
                 pbar.set_postfix(({
                     'epoch': '%d' % (num_episodes / 10 * i + i_epoch + 1),
                     'return': '%.3f' % np.mean(return_list[-10:])
